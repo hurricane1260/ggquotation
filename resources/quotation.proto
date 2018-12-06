@@ -13,29 +13,20 @@ message Quotation3xxx11 {
     required int64 NumTrades = 9;
     required int64 TotalVolumeTrade = 10;
     required int64 TotalValueTrade = 11;
-    //optional int32 type = 2 [default=77];
+}
+
+message MDEntry300111 {
+    required int32 MDEntryType = 1;
+    required int32 MDEntryPx = 2;
+    required int32 MDEntrySize = 3;
+    required int32 MDPriceLevel = 4;
+    required int32 NumberOfOrders = 5;
+    required int32 NoOrders = 6;
+    required int32 OrderQty = 7;
 }
 
 message Quotation300111 {
-    required Quotation Head = 1;
-    required double BuyPrice1 = 2;
-    required double BuyPrice2 = 3;
-    required double BuyPrice3 = 4;
-    required double BuyPrice4 = 5;
-    required double BuyPrice5 = 6;
-    required int64 BuyAmt1 = 7;
-    required int64 BuyAmt2 = 8;
-    required int64 BuyAmt3 = 9;
-    required int64 BuyAmt4 = 10;
-    required int64 BuyAmt5 = 11;
-    required double SellPrice1 = 12;
-    required double SellPrice2 = 13;
-    required double SellPrice3 = 14;
-    required double SellPrice4 = 15;
-    required double SellPrice5 = 16;
-    required int64 SellAmt1 = 17;
-    required int64 SellAmt2 = 18;
-    required int64 SellAmt3 = 19;
-    required int64 SellAmt4 = 20;
-    required int64 SellAmt5 = 21;
+    required Quotation3xxx11 Head = 1;
+    required int32 NoMDEntries = 2;
+    repeated MDEntry300111 MDEntry = 3;
 }
