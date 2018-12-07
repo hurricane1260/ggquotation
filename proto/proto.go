@@ -3,9 +3,11 @@ package proto
 import (
 	"bytes"
 	"encoding/binary"
+	"ggquotation/protobuf"
 	l4g "github.com/alecthomas/log4go"
 	"io"
 	"net"
+	"strings"
 )
 
 const (
@@ -53,14 +55,12 @@ func Recv(conn net.Conn) {
 			return
 		}
 
-		currBuffer := append(currBuffer, buffer[:n]...)
-
+		currBuffer = append(currBuffer, buffer[:n]...)
 		for {
 			pkgLen, status := ParsePackage(currBuffer)
 			if status == PACKAGE_LESS {
 				break
 			}
-
 			if status == PACKAGE_FULL {
 				pkg := make([]byte, pkgLen)
 				copy(pkg, currBuffer[:pkgLen])
@@ -81,7 +81,6 @@ func Recv(conn net.Conn) {
 }
 
 func ParsePackage(buff []byte) (pkgLen, status int) {
-
 	length := len(buff)
 	if length < 8 {
 		return 0, PACKAGE_LESS
@@ -98,7 +97,7 @@ func ParsePackage(buff []byte) (pkgLen, status int) {
 	if len(buff) < int(8+bodylength+4) {
 		return 0, PACKAGE_LESS
 	}
-
+	// TODO: use checkSum to validate whether PACKAGE_FULL
 	return int(8 + bodylength + 4), PACKAGE_FULL
 }
 
@@ -127,5 +126,40 @@ func ParseMessage(pkg []byte) {
 	case 300191: //集中竞价业务逐笔成交行情
 	case 300591: //协议交易业务逐笔成交行情
 	case 300791: //转融通证券出借业务逐笔成交行情
+	}
+}
+
+func ParseMessage3xxx11(pkg []byte) {
+	quotation := &protobuf.Quotation300111{}
+	quotation.Head = &protobuf.Head3Xxx11{}
+
+	binary.Read(bytes.NewBuffer(pkg[0:4]), binary.BigEndian, &quotation.Head.MsgType)
+	binary.Read(bytes.NewBuffer(pkg[8:16]), binary.BigEndian, &quotation.Head.OrigTime)
+	binary.Read(bytes.NewBuffer(pkg[16:18]), binary.BigEndian, &quotation.Head.ChannelNo)
+	quotation.Head.MDStreamID = strings.TrimSpace(string(pkg[18:21]))
+	quotation.Head.SecurityID = strings.TrimSpace(string(pkg[21:29]))
+	quotation.Head.SecurityIDSource = strings.TrimSpace(string(pkg[29:33]))
+
+	quotation.Head.TradingPhaseCode = make([]byte, 8)
+	copy(quotation.Head.TradingPhaseCode, pkg[33:41])
+
+	binary.Read(bytes.NewBuffer(pkg[41:49]), binary.BigEndian, &quotation.Head.PrevClosePx)
+	binary.Read(bytes.NewBuffer(pkg[49:57]), binary.BigEndian, &quotation.Head.NumTrades)
+	binary.Read(bytes.NewBuffer(pkg[57:65]), binary.BigEndian, &quotation.Head.TotalVolumeTrade)
+	binary.Read(bytes.NewBuffer(pkg[65:73]), binary.BigEndian, &quotation.Head.TotalValueTrade)
+}
+
+func ParseMessage300111(quotation protobuf.Quotation300111, pkg []byte, index int) {
+	binary.Read(bytes.NewBuffer(pkg[index:index+4]), binary.BigEndian, &quotation.NoMDEntries)
+	for i := 0; i < int(quotation.NoMDEntries); i++ {
+		mdEntry := &protobuf.MDEntry300111{}
+		mdEntry.MDEntryType = strings.TrimSpace(string(pkg[index+4 : index+6]))
+		binary.Read(bytes.NewBuffer(pkg[index+6:index+14]), binary.BigEndian, mdEntry.MDEntryPx)
+		binary.Read(bytes.NewBuffer(pkg[index+6:index+14]), binary.BigEndian, mdEntry.MDEntrySize)
+		binary.Read(bytes.NewBuffer(pkg[index+14:index+22]), binary.BigEndian, mdEntry.MDEntryPx)
+		binary.Read(bytes.NewBuffer(pkg[index+22:index+24]), binary.BigEndian, mdEntry.MDPriceLevel)
+		binary.Read(bytes.NewBuffer(pkg[index+24:index+32]), binary.BigEndian, mdEntry.NumberOfOrders)
+		binary.Read(bytes.NewBuffer(pkg[index+32:index+36]), binary.BigEndian, mdEntry.NoOrders)
+
 	}
 }

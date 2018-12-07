@@ -1,32 +1,87 @@
-syntax = "proto2";
+syntax = "proto3";
 package protobuf;
 
-message Quotation3xxx11 {
-    required int32 MsgType = 1;
-    required int64 OrigTime = 2;
-    required int64 ChannelNo = 3;
-    required int64 MDStreamID = 4;
-    required string SecurityID = 5;
-    required string SecurityIDSource = 6;
-    required string TradingPhaseCode = 7;
-    required double PrevClosePx = 8;
-    required int64 NumTrades = 9;
-    required int64 TotalVolumeTrade = 10;
-    required int64 TotalValueTrade = 11;
+
+// MDGW发布快照行情消息定义
+message Head3xxx11 {
+    int32 MsgType = 1; //消息类型,uInt32
+    int64 OrigTime = 2;    //数据生成时间,Int64,YYYYMMDDHHMMSSsss
+    int32 ChannelNo = 3;   //频道代码,uInt16
+    string MDStreamID = 4; //行情类别,char[3]
+    string SecurityID = 5; //证券代码,char[8]
+    string SecurityIDSource = 6;   //证券代码源,char[4],102=深圳证券交易所,103=香港交易所
+    bytes TradingPhaseCode = 7;   //产品所处的交易阶段代码,char[8]
+    int64 PrevClosePx = 8; //昨收价,Int64,N13(4)
+    int64 NumTrades = 9;   //成交笔数,Int64
+    int64 TotalVolumeTrade = 10;   //成交总量,Int64,N15(2)
+    int64 TotalValueTrade = 11;    //成交总金额,Int64,N18(4)
 }
 
+//集中竞价交易业务行情快照扩展字段
 message MDEntry300111 {
-    required int32 MDEntryType = 1;
-    required int32 MDEntryPx = 2;
-    required int32 MDEntrySize = 3;
-    required int32 MDPriceLevel = 4;
-    required int32 NumberOfOrders = 5;
-    required int32 NoOrders = 6;
-    required int32 OrderQty = 7;
+    string MDEntryType = 1;    //行情条目类别,char[2]
+    int64 MDEntryPx = 2;   //行情条目价格,Int64,N18(6)
+    int64 MDEntrySize = 3; //行情条目数量,Int64,N15(2)
+    int32 MDPriceLevel = 4;    //买卖盘档位,uInt16
+    int64 NumberOfOrders = 5;  //价位总委托笔数,Int64
+    uint32 NoOrders = 6;    //价位揭示委托笔数,uInt32
+    int64 OrderQty = 7;    //订单数量,Int64,N15(2)
 }
 
 message Quotation300111 {
-    required Quotation3xxx11 Head = 1;
-    required int32 NoMDEntries = 2;
+    Head3xxx11 Head = 1;
+    int32 NoMDEntries = 2; //行情条目个数,uInt32
     repeated MDEntry300111 MDEntry = 3;
 }
+
+//指数行情快照扩展字段
+message MDEntry309011 {
+    int32 MDEntryType = 1;
+    int32 MDEntryPx = 2;
+}
+
+message Quotation309011 {
+    Head3xxx11 Head = 1;
+    int32 NoMDEntries = 2;
+    repeated MDEntry309011 MDEntry = 3;
+}
+
+// MDGW发布逐笔委托行情消息定义
+message Head30xx92 {
+    int32 MsgType = 1;
+    int64 ChannelNo = 2;
+    int64 ApplSeqNum = 3;
+    int64 MDStreamID = 4;
+    string SecurityID = 5;
+    string SecurityIDSource = 6;
+    string Price = 7;
+    double OrderQty = 8;
+    int64 Side = 9;
+    int64 TransactTime = 10;
+}
+
+message Quotation300192 {
+    Head30xx92 Head = 1;
+    int32 OrdType = 2;
+}
+
+// MDGW发布逐笔成交行情消息定义
+message Head30xx91 {
+    int32 MsgType = 1;
+    int64 ChannelNo = 2;
+    int64 ApplSeqNum = 3;
+    int64 MDStreamID = 4;
+    string BidApplSeqNum = 5;
+    string OfferApplSeqNum = 6;
+    string SecurityID = 7;
+    double SecurityIDSource = 8;
+    int64 LastPx = 9;
+    int64 LastQty = 10;
+    int64 ExecType = 11;
+    int64 TransactTime = 12;
+}
+
+message Quotation300191 {
+    Head30xx92 Head = 1;
+}
+
