@@ -161,5 +161,6 @@ func ParseMessage300111(quotation protobuf.Quotation300111, pkg []byte, index in
 		binary.Read(bytes.NewBuffer(pkg[index+24:index+32]), binary.BigEndian, mdEntry.NumberOfOrders)
 		binary.Read(bytes.NewBuffer(pkg[index+32:index+36]), binary.BigEndian, mdEntry.NoOrders)
 
+		quotation.MDEntry = append(quotation.MDEntry, mdEntry)
 	}
 }
